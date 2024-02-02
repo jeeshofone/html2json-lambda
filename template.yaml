@@ -8,21 +8,10 @@ Parameters:
   DestinationBucketName:
     Type: String
     Description: The name of the destination S3 bucket
-  CreateSourceBucket:
-    Type: String
-    Default: 'yes'
-    AllowedValues: ['yes', 'no']
-    Description: Whether to create the source S3 bucket
-  CreateDestinationBucket:
-    Type: String
-    Default: 'yes'
-    AllowedValues: ['yes', 'no']
-    Description: Whether to create the destination S3 bucket
 
 Resources:
   HtmlBucket:
     Type: 'AWS::S3::Bucket'
-    Condition: ShouldCreateSourceBucket
     Properties:
       BucketName: !Ref SourceBucketName
       NotificationConfiguration:
@@ -37,7 +26,6 @@ Resources:
       
   JsonBucket:
     Type: 'AWS::S3::Bucket'
-    Condition: ShouldCreateDestinationBucket
     Properties:
       BucketName: !Ref DestinationBucketName
       PublicAccessBlockConfiguration:
@@ -106,8 +94,8 @@ Resources:
       CodeUri: .
       Handler: index.lambda_handler
       Runtime: python3.11
-      MemorySize: 1024
-      Timeout: 300
+      MemorySize: 4096
+      Timeout: 600
       Environment:
         Variables:
           JSON_BUCKET: !Ref DestinationBucketName
@@ -131,9 +119,3 @@ Resources:
       FunctionName: !GetAtt HtmlToJsonLambda.Arn
       Principal: 's3.amazonaws.com'
       SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
-
-Conditions:
-  ShouldCreateSourceBucket:
-    !Equals [ !Ref CreateSourceBucket, 'yes' ]
-  ShouldCreateDestinationBucket:
-    !Equals [ !Ref CreateDestinationBucket, 'yes' ]
